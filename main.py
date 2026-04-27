@@ -1,4 +1,4 @@
-from laboratorio_rgb.window import iniciar_aplicacion
+from procesamiento.window import iniciar_aplicacion
 
 
 if __name__ == "__main__":
