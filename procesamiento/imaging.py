@@ -151,3 +151,16 @@ def describir_canal(canal: np.ndarray) -> str:
         f"min={int(canal.min())} | max={int(canal.max())} | "
         f"media={float(canal.mean()):.1f}"
     )
+
+
+def imagen_es_gris(imagen_rgb: np.ndarray, tolerancia: int = 2) -> bool:
+    if imagen_rgb.ndim != 3 or imagen_rgb.shape[2] != 3:
+        return True
+    dif_rg = cv2.absdiff(imagen_rgb[:, :, 0], imagen_rgb[:, :, 1])
+    dif_rb = cv2.absdiff(imagen_rgb[:, :, 0], imagen_rgb[:, :, 2])
+    dif_gb = cv2.absdiff(imagen_rgb[:, :, 1], imagen_rgb[:, :, 2])
+    return (
+        int(dif_rg.max()) <= tolerancia
+        and int(dif_rb.max()) <= tolerancia
+        and int(dif_gb.max()) <= tolerancia
+    )

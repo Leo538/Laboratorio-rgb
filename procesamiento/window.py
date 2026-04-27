@@ -31,11 +31,11 @@ from .imaging import (
     aplicar_perfil_rgb,
     binarizar_imagen,
     calcular_histograma,
-    colorear_canal,
     combinar_canales_rgb,
     convertir_a_grises,
     describir_canal,
     guardar_imagen,
+    imagen_es_gris,
     separar_canales_rgb,
 )
 from .widgets import EditorCanal, PanelImagen, TarjetaDato
@@ -44,7 +44,7 @@ from .widgets import EditorCanal, PanelImagen, TarjetaDato
 class VentanaLaboratorioRGB(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Laboratorio RGB")
+        self.setWindowTitle("Procesamiento de imágenes")
         self.resize(1500, 940)
         self.setMinimumSize(1160, 760)
 
@@ -162,7 +162,7 @@ class VentanaLaboratorioRGB(QMainWindow):
         columna_texto.setSpacing(8)
         fila_superior.addLayout(columna_texto, 1)
 
-        titulo = QLabel("Laboratorio RGB")
+        titulo = QLabel("Procesamiento de imágenes")
         titulo.setObjectName("heroTitle")
         columna_texto.addWidget(titulo)
 
@@ -522,12 +522,17 @@ class VentanaLaboratorioRGB(QMainWindow):
         for nombre_canal in ORDEN_CANALES:
             canal = self.canales_originales[nombre_canal]
             self.paneles_base[nombre_canal].fijar_imagen(
-                colorear_canal(canal, nombre_canal),
+                canal,
                 f"{TITULO_CANAL[nombre_canal]} base | {describir_canal(canal)}",
             )
 
         self._activar_controles(True)
-        self._informar("Imagen cargada. Ajusta los sliders para modificar cada canal.")
+        if imagen_es_gris(imagen):
+            self._informar(
+                "La imagen cargada es monocromatica. Los canales RGB se veran en escala de grises."
+            )
+        else:
+            self._informar("Imagen cargada. Ajusta los sliders para modificar cada canal.")
         self.procesar_imagen()
 
     def reiniciar_controles(self) -> None:
@@ -654,7 +659,7 @@ class VentanaLaboratorioRGB(QMainWindow):
             base = self.canales_originales[nombre_canal]
             ajustado = self.canales_ajustados[nombre_canal]
             self.paneles_ajustados[nombre_canal].fijar_imagen(
-                colorear_canal(ajustado, nombre_canal),
+                ajustado,
                 (
                     f"{TITULO_CANAL[nombre_canal]} al "
                     f"{self.editores_canal[nombre_canal].valor_actual()}% | "

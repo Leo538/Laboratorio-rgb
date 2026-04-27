@@ -41,7 +41,7 @@ class EtiquetaImagen(QLabel):
         self.setText("")
         self._actualizar_pixmap()
 
-    def resizeEvent(self, event) -> None:  # noqa: N802
+    def resizeEvent(self, event) -> None:  
         super().resizeEvent(event)
         self._actualizar_pixmap()
 
@@ -108,7 +108,7 @@ class TarjetaDato(QFrame):
 class PanelHistograma(QWidget):
     def __init__(self, color_acento: str) -> None:
         super().__init__()
-        self.setMinimumHeight(165)
+        self.setMinimumHeight(190)
         self._color_acento = QColor(color_acento)
         self._histograma_base = np.zeros(256, dtype=np.float32)
         self._histograma_ajustado = np.zeros(256, dtype=np.float32)
@@ -132,13 +132,20 @@ class PanelHistograma(QWidget):
         painter.setPen(QColor("#21314d"))
         painter.drawRect(caja)
 
-        grafica = QRectF(14, 12, max(10, self.width() - 28), max(10, self.height() - 32))
+        pico = max(
+            float(self._histograma_base.max()) if self._histograma_base.size else 0.0,
+            float(self._histograma_ajustado.max()) if self._histograma_ajustado.size else 0.0,
+            1.0,
+        )
+
+        grafica = QRectF(56, 24, max(10, self.width() - 68), max(10, self.height() - 52))
         painter.fillRect(grafica, QColor("#111c32"))
 
         self._dibujar_histograma(
             painter,
             grafica,
             self._histograma_base,
+            pico,
             QColor("#94a3b8"),
             0.32,
         )
@@ -146,24 +153,21 @@ class PanelHistograma(QWidget):
             painter,
             grafica,
             self._histograma_ajustado,
+            pico,
             self._color_acento,
             0.90,
         )
-        self._dibujar_guias(painter, grafica)
+        self._dibujar_guias(painter, grafica, pico)
 
     def _dibujar_histograma(
         self,
         painter: QPainter,
         grafica: QRectF,
         valores: np.ndarray,
+        pico: float,
         color: QColor,
         opacidad: float,
     ) -> None:
-        pico = max(
-            float(self._histograma_base.max()) if self._histograma_base.size else 0.0,
-            float(self._histograma_ajustado.max()) if self._histograma_ajustado.size else 0.0,
-            1.0,
-        )
         path = QPainterPath()
         path.moveTo(grafica.left(), grafica.bottom())
         for indice, cantidad in enumerate(valores):
@@ -182,15 +186,29 @@ class PanelHistograma(QWidget):
         painter.setPen(QPen(borde, 1.5))
         painter.drawPath(path)
 
-    def _dibujar_guias(self, painter: QPainter, grafica: QRectF) -> None:
+    def _dibujar_guias(self, painter: QPainter, grafica: QRectF, pico: float) -> None:
         painter.setPen(QColor("#4c5b78"))
         for relacion in (0.25, 0.50, 0.75):
             y = grafica.top() + (grafica.height() * relacion)
             painter.drawLine(grafica.left(), y, grafica.right(), y)
+
         painter.setPen(QColor("#d6e2ff"))
         painter.setFont(QFont("Segoe UI", 8))
-        painter.drawText(QRectF(grafica.left(), grafica.bottom() + 2, 40, 14), Qt.AlignLeft, "0")
-        painter.drawText(QRectF(grafica.right() - 40, grafica.bottom() + 2, 40, 14), Qt.AlignRight, "255")
+        for valor in (0, 64, 128, 192, 255):
+            x = grafica.left() + (grafica.width() * valor / 255.0)
+            etiqueta = QRectF(x - 18, grafica.bottom() + 2, 36, 14)
+            painter.drawText(etiqueta, Qt.AlignHCenter, str(valor))
+
+        # Eje Y: frecuencias absolutas de pixeles.
+        for relacion in (1.0, 0.75, 0.50, 0.25, 0.0):
+            y = grafica.top() + (grafica.height() * relacion)
+            valor = int(round((1.0 - relacion) * pico))
+            etiqueta = QRectF(4, y - 8, 48, 16)
+            painter.drawText(etiqueta, Qt.AlignRight | Qt.AlignVCenter, str(valor))
+
+        painter.setPen(QColor("#c7d2fe"))
+        painter.setFont(QFont("Segoe UI", 8, QFont.DemiBold))
+        painter.drawText(QRectF(4, 2, 140, 16), Qt.AlignLeft | Qt.AlignVCenter, "Frecuencia de pixeles")
 
 
 @dataclass(slots=True)
