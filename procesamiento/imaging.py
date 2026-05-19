@@ -21,13 +21,27 @@ class PerfilMezcla:
     nivel_azul: int = 100
 
 
+def _recortar_a_byte(valor: float) -> np.uint8:
+    if valor < 0:
+        return np.uint8(0)
+    if valor > 255:
+        return np.uint8(255)
+    return np.uint8(int(round(valor)))
+
+
+def _intercambiar_canales_rojo_azul(imagen: np.ndarray) -> np.ndarray:
+    if imagen.ndim != 3 or imagen.shape[2] != 3:
+        raise ValueError("Se esperaba una imagen de tres canales.")
+    return imagen[:, :, [2, 1, 0]].copy()
+
+
 def abrir_imagen_rgb(ruta: str | Path) -> np.ndarray:
     archivo = Path(ruta)
     buffer = np.fromfile(str(archivo), dtype=np.uint8)
     imagen_bgr = cv2.imdecode(buffer, cv2.IMREAD_COLOR)
     if imagen_bgr is None:
         raise ValueError("No fue posible abrir la imagen seleccionada.")
-    return cv2.cvtColor(imagen_bgr, cv2.COLOR_BGR2RGB)
+    return _intercambiar_canales_rojo_azul(imagen_bgr)
 
 
 def guardar_imagen(ruta: str | Path, imagen: np.ndarray) -> None:
@@ -38,7 +52,7 @@ def guardar_imagen(ruta: str | Path, imagen: np.ndarray) -> None:
 
     salida = imagen
     if imagen.ndim == 3:
-        salida = cv2.cvtColor(imagen, cv2.COLOR_RGB2BGR)
+        salida = _intercambiar_canales_rojo_azul(imagen)
 
     exito, codificada = cv2.imencode(extension, salida)
     if not exito:
@@ -78,13 +92,13 @@ def separar_canales_rgb(imagen: np.ndarray) -> dict[str, np.ndarray]:
 
 
 def calcular_histograma(canal: np.ndarray) -> np.ndarray:
-    histograma = cv2.calcHist([canal], [0], None, [256], [0, 256])
-    return histograma.reshape(-1).astype(np.float32)
+    return np.bincount(canal.ravel(), minlength=256).astype(np.float32)
 
 
 def ajustar_intensidad_canal(canal: np.ndarray, nivel: int) -> np.ndarray:
     factor = max(0, nivel) / 100.0
-    return cv2.convertScaleAbs(canal, alpha=factor, beta=0)
+    ajustado = canal.astype(np.float32) * factor
+    return np.clip(ajustado, 0, 255).astype(np.uint8)
 
 
 def aplicar_perfil_rgb(
@@ -99,7 +113,11 @@ def aplicar_perfil_rgb(
 
 
 def combinar_canales_rgb(canales: dict[str, np.ndarray]) -> np.ndarray:
-    return cv2.merge([canales["R"], canales["G"], canales["B"]])
+    imagen = np.zeros((canales["R"].shape[0], canales["R"].shape[1], 3), dtype=np.uint8)
+    imagen[:, :, 0] = canales["R"]
+    imagen[:, :, 1] = canales["G"]
+    imagen[:, :, 2] = canales["B"]
+    return imagen
 
 
 def colorear_canal(canal: np.ndarray, nombre_canal: str) -> np.ndarray:
@@ -120,30 +138,68 @@ def aplicar_mascara_bloques(
     ancho_reducido = max(1, int(np.ceil(ancho / float(bloques_x))))
     alto_reducido = max(1, int(np.ceil(alto / float(bloques_y))))
 
-    reducida = cv2.resize(
-        imagen,
-        (ancho_reducido, alto_reducido),
-        interpolation=cv2.INTER_AREA,
-    )
-    return cv2.resize(
-        reducida,
-        (ancho, alto),
-        interpolation=cv2.INTER_NEAREST,
-    )
+    if imagen.ndim == 2:
+        reducida = np.zeros((alto_reducido, ancho_reducido), dtype=np.uint8)
+    else:
+        reducida = np.zeros((alto_reducido, ancho_reducido, imagen.shape[2]), dtype=np.uint8)
+
+    for y_reducido in range(alto_reducido):
+        y0 = int(y_reducido * alto / alto_reducido)
+        y1 = int((y_reducido + 1) * alto / alto_reducido)
+        y1 = max(y0 + 1, min(alto, y1))
+
+        for x_reducido in range(ancho_reducido):
+            x0 = int(x_reducido * ancho / ancho_reducido)
+            x1 = int((x_reducido + 1) * ancho / ancho_reducido)
+            x1 = max(x0 + 1, min(ancho, x1))
+            bloque = imagen[y0:y1, x0:x1]
+
+            if imagen.ndim == 2:
+                suma = 0
+                conteo = 0
+                for y in range(bloque.shape[0]):
+                    for x in range(bloque.shape[1]):
+                        suma += int(bloque[y, x])
+                        conteo += 1
+                reducida[y_reducido, x_reducido] = _recortar_a_byte(suma / max(1, conteo))
+                continue
+
+            suma_r = 0
+            suma_g = 0
+            suma_b = 0
+            conteo = 0
+            for y in range(bloque.shape[0]):
+                for x in range(bloque.shape[1]):
+                    suma_r += int(bloque[y, x, 0])
+                    suma_g += int(bloque[y, x, 1])
+                    suma_b += int(bloque[y, x, 2])
+                    conteo += 1
+
+            reducida[y_reducido, x_reducido, 0] = _recortar_a_byte(suma_r / max(1, conteo))
+            reducida[y_reducido, x_reducido, 1] = _recortar_a_byte(suma_g / max(1, conteo))
+            reducida[y_reducido, x_reducido, 2] = _recortar_a_byte(suma_b / max(1, conteo))
+
+    salida = np.zeros_like(imagen)
+    for y in range(alto):
+        y_reducido = min(alto_reducido - 1, int(y * alto_reducido / alto))
+        for x in range(ancho):
+            x_reducido = min(ancho_reducido - 1, int(x * ancho_reducido / ancho))
+            salida[y, x] = reducida[y_reducido, x_reducido]
+
+    return salida
 
 
 def convertir_a_grises(imagen_rgb: np.ndarray) -> np.ndarray:
-    return cv2.cvtColor(imagen_rgb, cv2.COLOR_RGB2GRAY)
+    r = imagen_rgb[:, :, 0].astype(np.float32)
+    g = imagen_rgb[:, :, 1].astype(np.float32)
+    b = imagen_rgb[:, :, 2].astype(np.float32)
+    gris = (0.299 * r) + (0.587 * g) + (0.114 * b)
+    return np.clip(gris, 0, 255).astype(np.uint8)
 
 
 def binarizar_imagen(imagen_gris: np.ndarray, umbral: int) -> np.ndarray:
-    _, binaria = cv2.threshold(
-        imagen_gris,
-        int(np.clip(umbral, 0, 255)),
-        255,
-        cv2.THRESH_BINARY,
-    )
-    return binaria
+    umbral_ajustado = int(np.clip(umbral, 0, 255))
+    return np.where(imagen_gris >= umbral_ajustado, 255, 0).astype(np.uint8)
 
 
 def describir_canal(canal: np.ndarray) -> str:
@@ -156,11 +212,6 @@ def describir_canal(canal: np.ndarray) -> str:
 def imagen_es_gris(imagen_rgb: np.ndarray, tolerancia: int = 2) -> bool:
     if imagen_rgb.ndim != 3 or imagen_rgb.shape[2] != 3:
         return True
-    dif_rg = cv2.absdiff(imagen_rgb[:, :, 0], imagen_rgb[:, :, 1])
-    dif_rb = cv2.absdiff(imagen_rgb[:, :, 0], imagen_rgb[:, :, 2])
-    dif_gb = cv2.absdiff(imagen_rgb[:, :, 1], imagen_rgb[:, :, 2])
-    return (
-        int(dif_rg.max()) <= tolerancia
-        and int(dif_rb.max()) <= tolerancia
-        and int(dif_gb.max()) <= tolerancia
-    )
+    imagen_int = imagen_rgb.astype(np.int16)
+    diferencia = imagen_int.max(axis=2) - imagen_int.min(axis=2)
+    return int(diferencia.max()) <= tolerancia
