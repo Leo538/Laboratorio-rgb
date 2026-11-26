@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="./docs/assets/banner.svg" alt="Laboratorio RGB · Edición de canales y análisis de histogramas" width="100%">
+  <picture>
+    <source media="(prefers-reduced-motion: no-preference)" srcset="./docs/assets/banner-motion.svg">
+    <img src="./docs/assets/banner.svg" width="820" alt="Laboratorio RGB · Edición de canales y análisis de histogramas">
+  </picture>
 </p>
 
 <p align="center">
@@ -63,16 +66,10 @@ python3 -m venv .venv
 ## Capturas
 
 <p align="center">
-  <a href="./docs/assets/capturas/rgb.png"><img src="./docs/assets/capturas/rgb.png" alt="Editor de canales y comparación de imágenes" width="820"></a><br><strong>Editor de canales y comparación de imágenes</strong>
+  <a href="./docs/assets/capturas/rgb.png"><img src="./docs/assets/vistas/rgb.svg" width="820" alt="Editor de canales y comparación de imágenes"></a>
 </p>
 
-<table width="100%">
-  <tr>
-    <td width="50%" valign="top" align="center">
-      <a href="./docs/assets/capturas/rgb-histogramas.png"><img src="./docs/assets/capturas/rgb-histogramas.png" alt="Histogramas por canal" width="410"></a><br><sub>Histogramas por canal</sub>
-    </td>
-    <td width="50%" valign="top" align="center">
-      <a href="./docs/assets/capturas/rgb-mascara.png"><img src="./docs/assets/capturas/rgb-mascara.png" alt="Recorte, máscara y salida binaria" width="410"></a><br><sub>Recorte, máscara y salida binaria</sub>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <a href="./docs/assets/capturas/rgb-histogramas.png"><img src="./docs/assets/vistas/rgb-histogramas.svg" width="408" alt="Histogramas por canal"></a>
+  <a href="./docs/assets/capturas/rgb-mascara.png"><img src="./docs/assets/vistas/rgb-mascara.svg" width="408" alt="Recorte, máscara y salida binaria"></a>
+</p>

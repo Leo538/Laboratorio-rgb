@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="240" viewBox="0 0 900 240" role="img" aria-labelledby="title">
+  <title id="title">Laboratorio RGB · Edición de canales y análisis de histogramas</title>
+  <style>
+.beam { animation: color-in 1.05s ease-out both; }
+    .beam-green { animation-delay: .16s; }
+    .beam-blue { animation-delay: .31s; }
+    .spectrum { stroke-dasharray: 100; animation: mix-in 1.55s .12s ease-out both; }
+    @keyframes color-in { from { opacity: .13; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes mix-in { from { stroke-dashoffset: 100; opacity: .3; } to { stroke-dashoffset: 0; opacity: 1; } }
+  </style>
+  <defs>
+    <linearGradient id="surface" x2="1" y2="1"><stop stop-color="#19172d"/><stop offset=".53" stop-color="#21223b"/><stop offset="1" stop-color="#152841"/></linearGradient>
+    <linearGradient id="edge" x2="1" y2="1"><stop stop-color="#d9b8fa" stop-opacity=".91"/><stop offset=".38" stop-color="#6883a4" stop-opacity=".54"/><stop offset=".8" stop-color="#59718b" stop-opacity=".53"/><stop offset="1" stop-color="#d9b8fa" stop-opacity=".77"/></linearGradient>
+    <linearGradient id="title-color" x2="1" y2=".81"><stop stop-color="#faf1ff"/><stop offset=".46" stop-color="#e7c5ff"/><stop offset="1" stop-color="#b0e5ff"/></linearGradient>
+    <radialGradient id="shine" cx=".8" cy=".56" r=".57"><stop stop-color="#d9b8fa" stop-opacity=".16"/><stop offset="1" stop-color="#d9b8fa" stop-opacity="0"/></radialGradient>
+    <clipPath id="outline"><rect x="1" y="1" width="898" height="238" rx="21"/></clipPath>
+  </defs>
+  <g clip-path="url(#outline)">
+    <rect width="900" height="240" fill="url(#surface)"/>
+    <rect width="900" height="240" fill="url(#shine)"/>
+
+    <g fill-opacity=".22" stroke-width="1.5">
+      <circle class="beam beam-red" cx="435" cy="46" r="17" fill="#f07d9b" stroke="#ffa5bb"/>
+      <circle class="beam beam-green" cx="450" cy="61" r="17" fill="#82d6a4" stroke="#9ff0bf"/>
+      <circle class="beam beam-blue" cx="465" cy="46" r="17" fill="#6bb9ef" stroke="#a1dafa"/>
+    </g>
+    <path d="M39 120h78l21-36 32 58h-64l11-22" fill="#36293f" stroke="#e8c6f3" stroke-width="1.5" stroke-linejoin="round"/>
+    <path d="m151 111 56-27" stroke="#fd879f" stroke-opacity=".73" stroke-width="2.6"/>
+    <path d="m156 124 61-7" stroke="#8cecb6" stroke-opacity=".72" stroke-width="2.6"/>
+    <path d="m162 136 57 21" stroke="#85cbff" stroke-opacity=".72" stroke-width="2.6"/>
+    <g opacity=".56" fill="none" stroke-width="2" stroke-linecap="round">
+      <path d="M698 148c32 0 27-49 56-49s22 52 55 49h43" stroke="#fa8aaf"/>
+      <path d="M702 159c40 2 27-39 71-39 31 0 25 36 53 37h29" stroke="#93e9b3"/>
+      <path d="M704 169c30 2 38-25 58-25 34 0 26-49 54-49 18 0 24 32 42 32" stroke="#82baff"/>
+    </g>
+    <path class="spectrum" d="M266 201h368" stroke="url(#title-color)" stroke-width="2.8" stroke-linecap="round" pathLength="100"/>
+  </g>
+  <rect x="1" y="1" width="898" height="238" rx="21" fill="none" stroke="url(#edge)"/>
+  <g font-family="system-ui, 'Segoe UI', sans-serif" class="brand-name" fill="url(#title-color)" font-weight="820">
+    <text x="450" y="127" text-anchor="middle" font-size="66" letter-spacing="-3">Laboratorio <tspan fill="#ff9aa9">R</tspan><tspan fill="#9de5b6">G</tspan><tspan fill="#8ccbff">B</tspan></text>
+  </g>
+  <text x="450" y="168" text-anchor="middle" fill="#e2edf0" font-family="system-ui, 'Segoe UI', sans-serif" font-size="23" font-weight="500">Edición de color y análisis de histogramas</text>
+</svg>
